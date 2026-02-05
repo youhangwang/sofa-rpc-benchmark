@@ -21,24 +21,9 @@ import com.alipay.sofa.rpc.benchmark.service.UserServiceServerImpl;
 import com.alipay.sofa.rpc.config.ProviderConfig;
 import com.alipay.sofa.rpc.config.ServerConfig;
 
-import io.prometheus.client.exporter.HTTPServer;
-
-import java.io.IOException;
-
 public class BoltServer {
 
     public static void main(String[] args) {
-        // Start Prometheus HTTP server for metrics
-        String prometheusPort = System.getProperty("prometheus.port", "9090");
-        try {
-            HTTPServer prometheusServer = new HTTPServer(Integer.parseInt(prometheusPort));
-            System.out.println("Prometheus metrics server started on port " + prometheusPort);
-            System.out.println("Access metrics at: http://localhost:" + prometheusPort + "/metrics");
-        } catch (IOException e) {
-            System.err.println("Failed to start Prometheus HTTP server: " + e.getMessage());
-            e.printStackTrace();
-        }
-
         String port = System.getProperty("server.port", "12200");
         ServerConfig serverConfig;
         ProviderConfig<UserService> providerConfig;

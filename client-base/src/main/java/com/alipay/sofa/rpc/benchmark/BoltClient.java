@@ -36,6 +36,9 @@ import org.openjdk.jmh.runner.options.Options;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.prometheus.client.exporter.HTTPServer;
+
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
@@ -82,7 +85,7 @@ public class BoltClient extends AbstractClient {
         consumerConfig.unRefer();
     }
 
-    //@Benchmark
+    // @Benchmark
     @BenchmarkMode({ Mode.Throughput, Mode.AverageTime, Mode.SampleTime })
     @OutputTimeUnit(TimeUnit.SECONDS)
     @Override
@@ -90,7 +93,7 @@ public class BoltClient extends AbstractClient {
         return super.existUser();
     }
 
-    //@Benchmark
+    // @Benchmark
     @BenchmarkMode({ Mode.Throughput, Mode.AverageTime, Mode.SampleTime })
     @OutputTimeUnit(TimeUnit.MILLISECONDS)
     @Override
@@ -98,7 +101,7 @@ public class BoltClient extends AbstractClient {
         return super.createUser();
     }
 
-    //@Benchmark
+    // @Benchmark
     @BenchmarkMode({ Mode.Throughput, Mode.AverageTime, Mode.SampleTime })
     @OutputTimeUnit(TimeUnit.MILLISECONDS)
     @Override
@@ -106,7 +109,7 @@ public class BoltClient extends AbstractClient {
         return super.getUser();
     }
 
-    //@Benchmark
+    // @Benchmark
     @BenchmarkMode({ Mode.Throughput, Mode.AverageTime, Mode.SampleTime })
     @OutputTimeUnit(TimeUnit.MILLISECONDS)
     @Override
@@ -123,6 +126,16 @@ public class BoltClient extends AbstractClient {
     }
 
     public static void main(String[] args) throws Exception {
+        // Start Prometheus HTTP server for metrics
+        String prometheusPort = System.getProperty("prometheus.port", "9090");
+        try {
+            HTTPServer prometheusServer = new HTTPServer(Integer.parseInt(prometheusPort));
+            LOGGER.info("Prometheus metrics server started on port " + prometheusPort);
+            LOGGER.info("Access metrics at: http://localhost:" + prometheusPort + "/metrics");
+        } catch (IOException e) {
+            LOGGER.error("Failed to start Prometheus HTTP server: " + e.getMessage(), e);
+        }
+
         LOGGER.info(Arrays.toString(args));
         int concurrency = CONCURRENCY;
         String threadNum = System.getProperty("thread.num");
