@@ -29,6 +29,7 @@ import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Mode;
 import org.openjdk.jmh.annotations.OutputTimeUnit;
 import org.openjdk.jmh.annotations.Scope;
+import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.annotations.TearDown;
 import org.openjdk.jmh.runner.Runner;
@@ -53,6 +54,8 @@ public class BoltClient extends AbstractClient {
     private final UserService                 userService;
 
     private final ConsumerConfig<UserService> consumerConfig;
+
+    private HTTPServer                        prometheusServer;
 
     public BoltClient() {
         // Ensure Prometheus metrics are initialized (needed in forked JMH processes)
@@ -84,8 +87,24 @@ public class BoltClient extends AbstractClient {
         return userService;
     }
 
+    @Setup
+    public void setup() {
+        String prometheusPort = System.getProperty("prometheus.port", "9090");
+        try {
+            prometheusServer = new HTTPServer(Integer.parseInt(prometheusPort));
+            LOGGER.info("Prometheus metrics server started on port " + prometheusPort);
+            LOGGER.info("Access metrics at: http://localhost:" + prometheusPort + "/metrics");
+        } catch (IOException e) {
+            LOGGER.error("Failed to start Prometheus HTTP server: " + e.getMessage(), e);
+        }
+    }
+
     @TearDown
     public void close() {
+        if (prometheusServer != null) {
+            prometheusServer.stop();
+            LOGGER.info("Prometheus metrics server stopped");
+        }
         consumerConfig.unRefer();
     }
 
@@ -132,16 +151,6 @@ public class BoltClient extends AbstractClient {
     public static void main(String[] args) throws Exception {
         // Initialize Prometheus metrics (must be called once before use)
         PrometheusMetrics.init();
-
-        // Start Prometheus HTTP server for metrics
-        String prometheusPort = System.getProperty("prometheus.port", "9090");
-        try {
-            HTTPServer prometheusServer = new HTTPServer(Integer.parseInt(prometheusPort));
-            LOGGER.info("Prometheus metrics server started on port " + prometheusPort);
-            LOGGER.info("Access metrics at: http://localhost:" + prometheusPort + "/metrics");
-        } catch (IOException e) {
-            LOGGER.error("Failed to start Prometheus HTTP server: " + e.getMessage(), e);
-        }
 
         LOGGER.info(Arrays.toString(args));
         int concurrency = CONCURRENCY;

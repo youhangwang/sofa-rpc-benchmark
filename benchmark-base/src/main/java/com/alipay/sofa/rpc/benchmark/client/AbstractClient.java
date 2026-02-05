@@ -54,10 +54,10 @@ public abstract class AbstractClient {
     }
 
     public User verifyUser() throws Exception {
+        int id = counter.getAndIncrement();
+        User user = _serviceUserService.getUser(id);
         Histogram.Timer timer = PrometheusMetrics.verifyUserDuration.startTimer();
         try {
-            int id = counter.getAndIncrement();
-            User user = _serviceUserService.getUser(id);
             return getUserService().verifyUser(user);
         } finally {
             timer.observeDuration();
