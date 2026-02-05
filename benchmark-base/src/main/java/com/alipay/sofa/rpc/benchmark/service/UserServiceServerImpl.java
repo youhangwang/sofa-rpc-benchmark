@@ -18,6 +18,7 @@ package com.alipay.sofa.rpc.benchmark.service;
 
 import com.alipay.sofa.rpc.benchmark.bean.Page;
 import com.alipay.sofa.rpc.benchmark.bean.User;
+import com.alipay.sofa.rpc.benchmark.metrics.PrometheusMetrics;
 import com.alipay.sofa.common.utils.StringUtil;
 
 import io.prometheus.client.Histogram;
@@ -33,15 +34,6 @@ import java.util.Random;
 import java.util.zip.CRC32;
 
 public class UserServiceServerImpl implements UserService {
-
-    // Prometheus histogram metric for computing logic execution time
-    private static final Histogram computingLogicDuration = Histogram
-                                                              .build()
-                                                              .name("user_service_computing_logic_duration_seconds")
-                                                              .help("Duration of computing logic execution in seconds")
-                                                              .buckets(0.001, 0.005, 0.01, 0.025, 0.05, 0.075, 0.1,
-                                                                  0.25, 0.5, 0.75, 1.0, 2.5, 5.0, 7.5, 10.0)
-                                                              .register();
 
     @Override
     public boolean existUser(String email) {
@@ -122,7 +114,7 @@ public class UserServiceServerImpl implements UserService {
         user.setPermissions(permissions);
 
         // add computing logic - with Prometheus timing
-        Histogram.Timer computingTimer = computingLogicDuration.startTimer();
+        Histogram.Timer computingTimer = PrometheusMetrics.computingLogicDuration.startTimer();
         try {
             int size = 1024 * 1024;
             double[] doubleList = new double[size];

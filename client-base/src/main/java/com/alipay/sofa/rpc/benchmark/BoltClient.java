@@ -19,6 +19,7 @@ package com.alipay.sofa.rpc.benchmark;
 import com.alipay.sofa.rpc.benchmark.bean.Page;
 import com.alipay.sofa.rpc.benchmark.bean.User;
 import com.alipay.sofa.rpc.benchmark.client.AbstractClient;
+import com.alipay.sofa.rpc.benchmark.metrics.PrometheusMetrics;
 import com.alipay.sofa.rpc.benchmark.service.UserService;
 import com.alipay.sofa.rpc.benchmark.utils.JMHHelper;
 import com.alipay.sofa.common.utils.StringUtil;
@@ -126,6 +127,9 @@ public class BoltClient extends AbstractClient {
     }
 
     public static void main(String[] args) throws Exception {
+        // Initialize Prometheus metrics (must be called once before use)
+        PrometheusMetrics.init();
+
         // Start Prometheus HTTP server for metrics
         String prometheusPort = System.getProperty("prometheus.port", "9090");
         try {

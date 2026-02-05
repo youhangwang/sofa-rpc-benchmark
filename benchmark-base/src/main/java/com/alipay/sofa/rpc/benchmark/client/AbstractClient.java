@@ -18,6 +18,7 @@ package com.alipay.sofa.rpc.benchmark.client;
 
 import com.alipay.sofa.rpc.benchmark.bean.Page;
 import com.alipay.sofa.rpc.benchmark.bean.User;
+import com.alipay.sofa.rpc.benchmark.metrics.PrometheusMetrics;
 import com.alipay.sofa.rpc.benchmark.service.UserService;
 import com.alipay.sofa.rpc.benchmark.service.UserServiceServerImpl;
 
@@ -26,18 +27,8 @@ import io.prometheus.client.Histogram;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public abstract class AbstractClient {
-    private final AtomicInteger    counter             = new AtomicInteger(0);
-    private final UserService      _serviceUserService = new UserServiceServerImpl();
-
-    // Prometheus histogram metric for client-side verifyUser RPC call duration
-    private static final Histogram verifyUserDuration  = Histogram
-                                                           .build()
-                                                           .name("client_verify_user_duration_seconds")
-                                                           .help(
-                                                               "Duration of verifyUser RPC call including local getUser in seconds")
-                                                           .buckets(0.001, 0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25,
-                                                               0.5, 0.75, 1.0, 2.5, 5.0, 7.5, 10.0)
-                                                           .register();
+    private final AtomicInteger counter             = new AtomicInteger(0);
+    private final UserService   _serviceUserService = new UserServiceServerImpl();
 
     protected abstract UserService getUserService();
 
@@ -63,7 +54,7 @@ public abstract class AbstractClient {
     }
 
     public User verifyUser() throws Exception {
-        Histogram.Timer timer = verifyUserDuration.startTimer();
+        Histogram.Timer timer = PrometheusMetrics.verifyUserDuration.startTimer();
         try {
             int id = counter.getAndIncrement();
             User user = _serviceUserService.getUser(id);
