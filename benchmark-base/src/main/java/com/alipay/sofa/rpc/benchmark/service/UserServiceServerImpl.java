@@ -93,25 +93,6 @@ public class UserServiceServerImpl implements UserService {
 
     @Override
     public User verifyUser(User user) {
-        return user;
-    }
-
-    public User getUserById(long id, int resumeSize) {
-        User user = new User();
-        user.setId(id);
-        user.setName("Doug Lea");
-        user.setSex(1);
-        user.setBirthday(LocalDate.of(1968, 12, 8));
-        user.setEmail("dong.lea@gmail.com");
-        user.setMobile("18612345678");
-        user.setAddress("北京市 中关村 中关村大街1号 鼎好大厦 1605");
-        user.setIcon("https://www.baidu.com/img/bd_logo1.png");
-        user.setStatus(1);
-        user.setCreateTime(LocalDateTime.now());
-        user.setUpdateTime(user.getCreateTime());
-        List<Integer> permissions = new ArrayList<>(
-                Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 19, 88, 86, 89, 90, 91, 92));
-        user.setPermissions(permissions);
 
         // add computing logic - with Prometheus timing
         Histogram.Timer computingTimer = PrometheusMetrics.computingLogicDuration.startTimer();
@@ -153,6 +134,26 @@ public class UserServiceServerImpl implements UserService {
         } finally {
             computingTimer.observeDuration();
         }
+
+        return user;
+    }
+
+    public User getUserById(long id, int resumeSize) {
+        User user = new User();
+        user.setId(id);
+        user.setName("Doug Lea");
+        user.setSex(1);
+        user.setBirthday(LocalDate.of(1968, 12, 8));
+        user.setEmail("dong.lea@gmail.com");
+        user.setMobile("18612345678");
+        user.setAddress("北京市 中关村 中关村大街1号 鼎好大厦 1605");
+        user.setIcon("https://www.baidu.com/img/bd_logo1.png");
+        user.setStatus(1);
+        user.setCreateTime(LocalDateTime.now());
+        user.setUpdateTime(user.getCreateTime());
+        List<Integer> permissions = new ArrayList<>(
+                Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 19, 88, 86, 89, 90, 91, 92));
+        user.setPermissions(permissions);
 
         Map<String, Object> resume = new HashMap<>();
         StringBuilder notes = new StringBuilder();

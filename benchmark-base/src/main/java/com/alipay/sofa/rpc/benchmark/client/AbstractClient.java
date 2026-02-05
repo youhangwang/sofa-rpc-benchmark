@@ -63,5 +63,4 @@ public abstract class AbstractClient {
             timer.observeDuration();
         }
     }
-
 }
