@@ -38,6 +38,7 @@ import org.openjdk.jmh.runner.options.Options;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.prometheus.client.Histogram;
 import io.prometheus.client.exporter.HTTPServer;
 
 import java.io.IOException;
@@ -145,7 +146,12 @@ public class BoltClient extends AbstractClient {
     @OutputTimeUnit(TimeUnit.MILLISECONDS)
     @Override
     public User verifyUser() throws Exception {
-        return super.verifyUser();
+        Histogram.Timer timer = PrometheusMetrics.TotalDuration.startTimer();
+        try {
+            return super.verifyUser();
+        } finally {
+            timer.observeDuration();
+        }
     }
 
     public static void main(String[] args) throws Exception {
