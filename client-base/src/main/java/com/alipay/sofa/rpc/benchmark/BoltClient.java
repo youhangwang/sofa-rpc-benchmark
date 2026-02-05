@@ -55,6 +55,9 @@ public class BoltClient extends AbstractClient {
     private final ConsumerConfig<UserService> consumerConfig;
 
     public BoltClient() {
+        // Ensure Prometheus metrics are initialized (needed in forked JMH processes)
+        PrometheusMetrics.init();
+
         String port = System.getProperty("server.port", "12200");
         String threadNum = System.getProperty("thread.num");
         if (StringUtil.isNotBlank(threadNum)) {
