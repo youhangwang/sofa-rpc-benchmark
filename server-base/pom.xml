@@ -22,6 +22,12 @@
             <artifactId>benchmark-base</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <!-- Prometheus HTTP server for exposing metrics -->
+        <dependency>
+            <groupId>io.prometheus</groupId>
+            <artifactId>simpleclient_httpserver</artifactId>
+            <version>0.16.0</version>
+        </dependency>
     </dependencies>
 
 </project>

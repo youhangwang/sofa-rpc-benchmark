@@ -20,6 +20,8 @@ import com.alipay.sofa.rpc.benchmark.bean.Page;
 import com.alipay.sofa.rpc.benchmark.bean.User;
 import com.alipay.sofa.common.utils.StringUtil;
 
+import io.prometheus.client.Histogram;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -31,6 +33,15 @@ import java.util.Random;
 import java.util.zip.CRC32;
 
 public class UserServiceServerImpl implements UserService {
+
+    // Prometheus histogram metric for computing logic execution time
+    private static final Histogram computingLogicDuration = Histogram
+                                                              .build()
+                                                              .name("user_service_computing_logic_duration_seconds")
+                                                              .help("Duration of computing logic execution in seconds")
+                                                              .buckets(0.001, 0.005, 0.01, 0.025, 0.05, 0.075, 0.1,
+                                                                  0.25, 0.5, 0.75, 1.0, 2.5, 5.0, 7.5, 10.0)
+                                                              .register();
 
     @Override
     public boolean existUser(String email) {
@@ -110,45 +121,50 @@ public class UserServiceServerImpl implements UserService {
                 Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 19, 88, 86, 89, 90, 91, 92));
         user.setPermissions(permissions);
 
-        // add computing logic
-        int size = 1024 * 1024;
-        double[] doubleList = new double[size];
-        for (int i = 0; i < size; i++) {
-            doubleList[i] = i * 0.1;
-        }
-        CRC32 crc = new CRC32();
-        int iterations  = 850;
-        double result = 0;
-        int start = 0;
-        for (int i = 0; i < iterations; i++) {
-            for (int j = start; j < start + 1024; j++) {
-                int index = start % size;
-                long doubleAsLong = Double.doubleToLongBits(doubleList[index]);
-                crc.update((int) (doubleAsLong & 0xFF));
-                crc.update((int) ((doubleAsLong >> 8) & 0xFF));
-                crc.update((int) ((doubleAsLong >> 16) & 0xFF));
-                crc.update((int) ((doubleAsLong >> 24) & 0xFF));
-                crc.update((int) ((doubleAsLong >> 32) & 0xFF));
-                crc.update((int) ((doubleAsLong >> 40) & 0xFF));
-                crc.update((int) ((doubleAsLong >> 48) & 0xFF));
-                crc.update((int) ((doubleAsLong >> 56) & 0xFF));
-
-                // 算术运算
-                double value = doubleList[index];
-                double value2 = doubleList[(index + 1) % size];
-                value = (value + 2.0) * 1.5 / 2.0;
-                value2 = value2 * 1.1 + 0.5 / value2;
-                doubleList[index] = (value + value2) / 2;
+        // add computing logic - with Prometheus timing
+        Histogram.Timer computingTimer = computingLogicDuration.startTimer();
+        try {
+            int size = 1024 * 1024;
+            double[] doubleList = new double[size];
+            for (int i = 0; i < size; i++) {
+                doubleList[i] = i * 0.1;
             }
-            start = (start + 1024) % size;
+            CRC32 crc = new CRC32();
+            int iterations = 850;
+            double result = 0;
+            int start = 0;
+            for (int i = 0; i < iterations; i++) {
+                for (int j = start; j < start + 1024; j++) {
+                    int index = start % size;
+                    long doubleAsLong = Double.doubleToLongBits(doubleList[index]);
+                    crc.update((int) (doubleAsLong & 0xFF));
+                    crc.update((int) ((doubleAsLong >> 8) & 0xFF));
+                    crc.update((int) ((doubleAsLong >> 16) & 0xFF));
+                    crc.update((int) ((doubleAsLong >> 24) & 0xFF));
+                    crc.update((int) ((doubleAsLong >> 32) & 0xFF));
+                    crc.update((int) ((doubleAsLong >> 40) & 0xFF));
+                    crc.update((int) ((doubleAsLong >> 48) & 0xFF));
+                    crc.update((int) ((doubleAsLong >> 56) & 0xFF));
+
+                    // 算术运算
+                    double value = doubleList[index];
+                    double value2 = doubleList[(index + 1) % size];
+                    value = (value + 2.0) * 1.5 / 2.0;
+                    value2 = value2 * 1.1 + 0.5 / value2;
+                    doubleList[index] = (value + value2) / 2;
+                }
+                start = (start + 1024) % size;
+            }
+            doubleList = new double[1];
+            doubleList[0] = result;
+            user.setDoubleList(doubleList);
+        } finally {
+            computingTimer.observeDuration();
         }
-        doubleList = new double[1];
-        doubleList[0] = result;
-        user.setDoubleList(doubleList);
 
         Map<String, Object> resume = new HashMap<>();
         StringBuilder notes = new StringBuilder();
-        for (int i =0; i< resumeSize; i++) {
+        for (int i = 0; i < resumeSize; i++) {
             notes.append("a");
         }
         resume.put("mark", notes.toString());
