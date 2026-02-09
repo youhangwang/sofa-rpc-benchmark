@@ -40,6 +40,7 @@ import org.slf4j.LoggerFactory;
 
 import io.prometheus.client.Histogram;
 import io.prometheus.client.exporter.HTTPServer;
+import io.prometheus.client.hotspot.DefaultExports;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -90,6 +91,9 @@ public class BoltClient extends AbstractClient {
 
     @Setup
     public void setup() {
+        DefaultExports.initialize();
+        LOGGER.info("JVM metrics registered");
+
         String prometheusPort = System.getProperty("prometheus.port", "9090");
         try {
             prometheusServer = new HTTPServer(Integer.parseInt(prometheusPort));
