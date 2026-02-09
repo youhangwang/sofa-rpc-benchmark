@@ -125,28 +125,45 @@ public class UserServiceServerImpl implements UserService {
             int iterations = 850;
             double result = 0;
             int start = 0;
-            for (int i = 0; i < iterations; i++) {
-                for (int j = start; j < start + 1024; j++) {
-                    int index = start % size;
-                    long doubleAsLong = Double.doubleToLongBits(doubleList[index]);
-                    crc.update((int) (doubleAsLong & 0xFF));
-                    crc.update((int) ((doubleAsLong >> 8) & 0xFF));
-                    crc.update((int) ((doubleAsLong >> 16) & 0xFF));
-                    crc.update((int) ((doubleAsLong >> 24) & 0xFF));
-                    crc.update((int) ((doubleAsLong >> 32) & 0xFF));
-                    crc.update((int) ((doubleAsLong >> 40) & 0xFF));
-                    crc.update((int) ((doubleAsLong >> 48) & 0xFF));
-                    crc.update((int) ((doubleAsLong >> 56) & 0xFF));
-
-                    // 算术运算
-                    double value = doubleList[index];
-                    double value2 = doubleList[(index + 1) % size];
-                    value = (value + 2.0) * 1.5 / 2.0;
-                    value2 = value2 * 1.1 + 0.5 / value2;
-                    doubleList[index] = (value + value2) / 2;
+            Histogram.Timer firstLoopTimer = PrometheusMetrics.firstNestedLoopDuration.startTimer();
+            try {
+                for (int i = 0; i < iterations; i++) {
+                    for (int j = start; j < start + 1024; j++) {
+                        int index = start % size;
+                        long doubleAsLong = Double.doubleToLongBits(doubleList[index]);
+                        crc.update((int) (doubleAsLong & 0xFF));
+                        crc.update((int) ((doubleAsLong >> 8) & 0xFF));
+                        crc.update((int) ((doubleAsLong >> 16) & 0xFF));
+                        crc.update((int) ((doubleAsLong >> 24) & 0xFF));
+                        crc.update((int) ((doubleAsLong >> 32) & 0xFF));
+                        crc.update((int) ((doubleAsLong >> 40) & 0xFF));
+                        crc.update((int) ((doubleAsLong >> 48) & 0xFF));
+                        crc.update((int) ((doubleAsLong >> 56) & 0xFF));
+                    }
+                    start = (start + 1024) % size;
                 }
-                start = (start + 1024) % size;
+            } finally {
+                firstLoopTimer.observeDuration();
             }
+
+            start = 0;
+            Histogram.Timer secondLoopTimer = PrometheusMetrics.secondNestedLoopDuration.startTimer();
+            try {
+                for (int i = 0; i < iterations; i++) {
+                    for (int j = start; j < start + 1024; j++) {
+                        int index = start % size;
+                        double value = doubleList[index];
+                        double value2 = doubleList[(index + 1) % size];
+                        value = (value + 2.0) * 1.5 / 2.0;
+                        value2 = value2 * 1.1 + 0.5 / value2;
+                        doubleList[index] = (value + value2) / 2;
+                    }
+                    start = (start + 1024) % size;
+                }
+            } finally {
+                secondLoopTimer.observeDuration();
+            }
+
             doubleList = new double[1];
             doubleList[0] = result;
             user.setDoubleList(doubleList);
