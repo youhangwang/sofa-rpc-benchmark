@@ -125,26 +125,7 @@ public class UserServiceServerImpl implements UserService {
             int iterations = 850;
             double result = 0;
             int start = 0;
-            Histogram.Timer firstLoopTimer = PrometheusMetrics.firstNestedLoopDuration.startTimer();
-            try {
-                for (int i = 0; i < iterations; i++) {
-                    for (int j = start; j < start + 1024; j++) {
-                        int index = start % size;
-                        long doubleAsLong = Double.doubleToLongBits(doubleList[index]);
-                        crc.update((int) (doubleAsLong & 0xFF));
-                        crc.update((int) ((doubleAsLong >> 8) & 0xFF));
-                        crc.update((int) ((doubleAsLong >> 16) & 0xFF));
-                        crc.update((int) ((doubleAsLong >> 24) & 0xFF));
-                        crc.update((int) ((doubleAsLong >> 32) & 0xFF));
-                        crc.update((int) ((doubleAsLong >> 40) & 0xFF));
-                        crc.update((int) ((doubleAsLong >> 48) & 0xFF));
-                        crc.update((int) ((doubleAsLong >> 56) & 0xFF));
-                    }
-                    start = (start + 1024) % size;
-                }
-            } finally {
-                firstLoopTimer.observeDuration();
-            }
+            firstNestedLoop(doubleList, crc, size, iterations, start);
 
             start = 0;
             Histogram.Timer secondLoopTimer = PrometheusMetrics.secondNestedLoopDuration.startTimer();
@@ -179,5 +160,28 @@ public class UserServiceServerImpl implements UserService {
         resume.put("mark", notes.toString());
         user.setResume(resume);
         return user;
+    }
+
+    private void firstNestedLoop(double[] doubleList, CRC32 crc, int size, int iterations, int start) {
+        Histogram.Timer firstLoopTimer = PrometheusMetrics.firstNestedLoopDuration.startTimer();
+        try {
+            for (int i = 0; i < iterations; i++) {
+                for (int j = start; j < start + 1024; j++) {
+                    int index = start % size;
+                    long doubleAsLong = Double.doubleToLongBits(doubleList[index]);
+                    crc.update((int) (doubleAsLong & 0xFF));
+                    crc.update((int) ((doubleAsLong >> 8) & 0xFF));
+                    crc.update((int) ((doubleAsLong >> 16) & 0xFF));
+                    crc.update((int) ((doubleAsLong >> 24) & 0xFF));
+                    crc.update((int) ((doubleAsLong >> 32) & 0xFF));
+                    crc.update((int) ((doubleAsLong >> 40) & 0xFF));
+                    crc.update((int) ((doubleAsLong >> 48) & 0xFF));
+                    crc.update((int) ((doubleAsLong >> 56) & 0xFF));
+                }
+                start = (start + 1024) % size;
+            }
+        } finally {
+            firstLoopTimer.observeDuration();
+        }
     }
 }
