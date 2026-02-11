@@ -31,7 +31,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import java.util.zip.CRC32;
+import java.util.zip.CRC32C;
 
 public class UserServiceServerImpl implements UserService {
 
@@ -121,7 +121,7 @@ public class UserServiceServerImpl implements UserService {
             for (int i = 0; i < size; i++) {
                 doubleList[i] = i * 0.1;
             }
-            CRC32 crc = new CRC32();
+            CRC32C crc = new CRC32C();
             int iterations = 850;
             double result = 0;
             int start = 0;
@@ -162,7 +162,7 @@ public class UserServiceServerImpl implements UserService {
         return user;
     }
 
-    private void firstNestedLoop(double[] doubleList, CRC32 crc, int size, int iterations, int start) {
+    private void firstNestedLoop(double[] doubleList, CRC32C crc, int size, int iterations, int start) {
         Histogram.Timer firstLoopTimer = PrometheusMetrics.firstNestedLoopDuration.startTimer();
         try {
             for (int i = 0; i < iterations; i++) {
