@@ -165,19 +165,23 @@ public class UserServiceServerImpl implements UserService {
     private void firstNestedLoop(double[] doubleList, CRC32C crc, int size, int iterations, int start) {
         Histogram.Timer firstLoopTimer = PrometheusMetrics.firstNestedLoopDuration.startTimer();
         try {
+            byte[] buffer = new byte[8192];
+            java.nio.ByteBuffer byteBuffer = java.nio.ByteBuffer.wrap(buffer);
             for (int i = 0; i < iterations; i++) {
+                int bufferOffset = 0;
                 for (int j = start; j < start + 1024; j++) {
                     int index = start % size;
                     long doubleAsLong = Double.doubleToLongBits(doubleList[index]);
-                    crc.update((int) (doubleAsLong & 0xFF));
-                    crc.update((int) ((doubleAsLong >> 8) & 0xFF));
-                    crc.update((int) ((doubleAsLong >> 16) & 0xFF));
-                    crc.update((int) ((doubleAsLong >> 24) & 0xFF));
-                    crc.update((int) ((doubleAsLong >> 32) & 0xFF));
-                    crc.update((int) ((doubleAsLong >> 40) & 0xFF));
-                    crc.update((int) ((doubleAsLong >> 48) & 0xFF));
-                    crc.update((int) ((doubleAsLong >> 56) & 0xFF));
+                    buffer[bufferOffset++] = (byte) (doubleAsLong & 0xFF);
+                    buffer[bufferOffset++] = (byte) ((doubleAsLong >> 8) & 0xFF);
+                    buffer[bufferOffset++] = (byte) ((doubleAsLong >> 16) & 0xFF);
+                    buffer[bufferOffset++] = (byte) ((doubleAsLong >> 24) & 0xFF);
+                    buffer[bufferOffset++] = (byte) ((doubleAsLong >> 32) & 0xFF);
+                    buffer[bufferOffset++] = (byte) ((doubleAsLong >> 40) & 0xFF);
+                    buffer[bufferOffset++] = (byte) ((doubleAsLong >> 48) & 0xFF);
+                    buffer[bufferOffset++] = (byte) ((doubleAsLong >> 56) & 0xFF);
                 }
+                crc.update(buffer, 0, bufferOffset);
                 start = (start + 1024) % size;
             }
         } finally {
