@@ -127,8 +127,8 @@ public class BoltClient extends AbstractClient {
                     // 0.5ms, 1ms, 2ms, 3ms, 4ms, 5ms, 7ms, 10ms, 15ms, 20ms, 30ms, 50ms, 100ms
                     // Note: explicitly specify as double seconds values
                     double[] buckets = new double[] {
-                        0.0005,0.0007,0.0009, 0.00095,0.001, 0.002, 0.003, 0.004, 0.005,
-                        0.007, 0.01
+                        0.003, 0.004,0.0045, 0.005,0.0055,0.006,0.0065,0.007,0.0075,0.008,0.0085,0.009,0.0095,
+                        0.01, 0.015, 0.02, 0.03, 0.04,0.05
                     };
                     long[] slaNanos = new long[buckets.length];
                     for (int i = 0; i < buckets.length; i++) {
