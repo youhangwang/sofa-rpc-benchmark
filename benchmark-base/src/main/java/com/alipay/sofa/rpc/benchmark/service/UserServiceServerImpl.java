@@ -125,8 +125,7 @@ public class UserServiceServerImpl implements UserService {
             int iterations = 850;
             double result = 0;
             int start = 0;
-            Histogram.Timer firstLoopTimer = PrometheusMetrics.firstNestedLoopDuration.startTimer();
-            try {
+
                 for (int i = 0; i < iterations; i++) {
                     for (int j = start; j < start + 1024; j++) {
                         int index = start % size;
@@ -139,19 +138,8 @@ public class UserServiceServerImpl implements UserService {
                         crc.update((int) ((doubleAsLong >> 40) & 0xFF));
                         crc.update((int) ((doubleAsLong >> 48) & 0xFF));
                         crc.update((int) ((doubleAsLong >> 56) & 0xFF));
-                    }
-                    start = (start + 1024) % size;
-                }
-            } finally {
-                firstLoopTimer.observeDuration();
-            }
 
-            start = 0;
-            Histogram.Timer secondLoopTimer = PrometheusMetrics.secondNestedLoopDuration.startTimer();
-            try {
-                for (int i = 0; i < iterations; i++) {
-                    for (int j = start; j < start + 1024; j++) {
-                        int index = start % size;
+                        // 算术运算
                         double value = doubleList[index];
                         double value2 = doubleList[(index + 1) % size];
                         value = (value + 2.0) * 1.5 / 2.0;
@@ -160,9 +148,6 @@ public class UserServiceServerImpl implements UserService {
                     }
                     start = (start + 1024) % size;
                 }
-            } finally {
-                secondLoopTimer.observeDuration();
-            }
 
             doubleList = new double[1];
             doubleList[0] = result;

@@ -73,21 +73,6 @@ public class PrometheusMetrics {
                 0.004, 0.005)
             .register();
 
-        firstNestedLoopDuration = Histogram
-            .build()
-            .name("first_nested_loop_duration_seconds")
-            .help("Duration of first nested loop (CRC32 operations) in seconds")
-            .buckets(0, 0.019, 0.021, 0.022, 0.023, 0.024, 0.025, 0.026, 0.027, 0.028, 0.029, 0.031, 0.033, 0.035,
-                0.045, 0.05, 0.06)
-            .register();
-
-        secondNestedLoopDuration = Histogram
-            .build()
-            .name("second_nested_loop_duration_seconds")
-            .help("Duration of second nested loop (arithmetic operations) in seconds")
-            .buckets(0, 0.004, 0.0042, 0.0044, 0.0046, 0.0048, 0.005, 0.006, 0.007, 0.008, 0.009, 0.01, 0.02)
-            .register();
-
         initialized = true;
     }
 
