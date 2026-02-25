@@ -35,6 +35,14 @@ import java.util.zip.CRC32;
 
 public class UserServiceServerImpl implements UserService {
 
+    // 可重用的对象，避免每次调用都创建
+    private static final int DOUBLE_LIST_SIZE = 1024 * 1024;
+    private static final ThreadLocal<double[]> DOUBLE_LIST_HOLDER = ThreadLocal.withInitial(
+            () -> new double[DOUBLE_LIST_SIZE]);
+    private static final ThreadLocal<CRC32> CRC32_HOLDER = ThreadLocal.withInitial(CRC32::new);
+    private static final List<Integer> PERMISSIONS = Arrays.asList(
+            1, 2, 3, 4, 5, 6, 7, 8, 19, 88, 86, 89, 90, 91, 92);
+
     @Override
     public boolean existUser(String email) {
         Random random = new Random();
@@ -96,32 +104,42 @@ public class UserServiceServerImpl implements UserService {
         return user;
     }
 
+    // 静态常量，避免每次调用都创建
+    private static final LocalDate USER_BIRTHDAY = LocalDate.of(1968, 12, 8);
+    private static final String USER_NAME = "Doug Lea";
+    private static final String USER_EMAIL = "dong.lea@gmail.com";
+    private static final String USER_MOBILE = "18612345678";
+    private static final String USER_ADDRESS = "北京市 中关村 中关村大街1号 鼎好大厦 1605";
+    private static final String USER_ICON = "https://www.baidu.com/img/bd_logo1.png";
+
     public User getUserById(long id, int resumeSize) {
         User user = new User();
         user.setId(id);
-        user.setName("Doug Lea");
+        user.setName(USER_NAME);
         user.setSex(1);
-        user.setBirthday(LocalDate.of(1968, 12, 8));
-        user.setEmail("dong.lea@gmail.com");
-        user.setMobile("18612345678");
-        user.setAddress("北京市 中关村 中关村大街1号 鼎好大厦 1605");
-        user.setIcon("https://www.baidu.com/img/bd_logo1.png");
+        user.setBirthday(USER_BIRTHDAY);
+        user.setEmail(USER_EMAIL);
+        user.setMobile(USER_MOBILE);
+        user.setAddress(USER_ADDRESS);
+        user.setIcon(USER_ICON);
         user.setStatus(1);
         user.setCreateTime(LocalDateTime.now());
         user.setUpdateTime(user.getCreateTime());
-        List<Integer> permissions = new ArrayList<>(
-                Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 19, 88, 86, 89, 90, 91, 92));
-        user.setPermissions(permissions);
+        // 复用静态权限列表，避免每次创建新的ArrayList
+        user.setPermissions(PERMISSIONS);
 
         // add computing logic - with Prometheus timing
         Histogram.Timer computingTimer = PrometheusMetrics.computingLogicDuration.startTimer();
         try {
-            int size = 1024 * 1024;
-            double[] doubleList = new double[size];
+            // 使用ThreadLocal重用double数组，避免每次创建8MB数组
+            double[] doubleList = DOUBLE_LIST_HOLDER.get();
+            int size = DOUBLE_LIST_SIZE;
             for (int i = 0; i < size; i++) {
                 doubleList[i] = i * 0.1;
             }
-            CRC32 crc = new CRC32();
+            // 使用ThreadLocal重用CRC32对象
+            CRC32 crc = CRC32_HOLDER.get();
+            crc.reset();
             int iterations = 850;
             double result = 0;
             int start = 0;
@@ -149,17 +167,22 @@ public class UserServiceServerImpl implements UserService {
                     start = (start + 1024) % size;
                 }
 
-            doubleList = new double[1];
+            // 重用数组，只设置第一个元素，避免创建新数组
             doubleList[0] = result;
-            user.setDoubleList(doubleList);
+            // 创建一个新的1元素数组来返回给User对象
+            double[] resultArray = new double[1];
+            resultArray[0] = result;
+            user.setDoubleList(resultArray);
         } finally {
             computingTimer.observeDuration();
         }
 
-        Map<String, Object> resume = new HashMap<>();
-        StringBuilder notes = new StringBuilder();
+        // 对于resume，当resumeSize相同时可以重用，但由于resumeSize是参数，每次都不同
+        // 所以仍然需要创建新的Map和StringBuilder，但可以通过capacity优化
+        Map<String, Object> resume = new HashMap<>(2);
+        StringBuilder notes = new StringBuilder(resumeSize);
         for (int i = 0; i < resumeSize; i++) {
-            notes.append("a");
+            notes.append('a');
         }
         resume.put("mark", notes.toString());
         user.setResume(resume);

@@ -18,7 +18,7 @@ build() {
 }
 
 java_options() {
-    JAVA_OPTIONS="-server -Xmx1g -Xms1g -XX:MaxDirectMemorySize=1g -XX:+UseG1GC -Djmh.ignoreLock=true"
+    JAVA_OPTIONS="-server -Xmx64g -Xms64g -XX:MaxDirectMemorySize=64g -XX:G1HeapRegionSize=32m -XX:+UseG1GC -Djmh.ignoreLock=true"
     if [ "x${MODE}" = "xprofiling" ]; then
         JAVA_OPTIONS="${JAVA_OPTIONS} \
             -XX:+UnlockCommercialFeatures \
